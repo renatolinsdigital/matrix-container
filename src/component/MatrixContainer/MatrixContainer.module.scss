@@ -1,0 +1,21 @@
+.wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+// Absolutely fills the wrapper — drawn behind all children
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+
+// Stacking layer that renders children above the canvas
+.content {
+  position: relative;
+  z-index: 1;
+}

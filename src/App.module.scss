@@ -1,0 +1,113 @@
+.app {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-weight: 500;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 1rem 0;
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #00ff00;
+  text-shadow: 0 0 40px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.3);
+  font-family: 'Courier New', 'Courier', monospace;
+  line-height: 1;
+  text-transform: uppercase;
+  -webkit-text-stroke: 0.3px rgba(0, 255, 0, 0.2);
+}
+
+.divider {
+  height: 1px;
+  width: 40%;
+  background: linear-gradient(90deg, transparent 0%, #00ff00 50%, transparent 100%);
+  margin: 0 auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature {
+  background: transparent;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  border-left: 2px solid #00ff00;
+  border-radius: 0;
+  padding: 1rem 1.25rem;
+  position: relative;
+  transition: all 0.25s ease;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #00ff00 0%, transparent 50%);
+  }
+
+  &:hover {
+    border-left-color: #00ff00;
+    border-color: rgba(0, 255, 0, 0.6);
+    background: rgba(0, 255, 0, 0.02);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.15);
+  }
+
+  .label {
+    font-size: 0.7rem;
+    color: rgba(0, 255, 0, 0.4);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-family: 'Courier New', 'Courier', monospace;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    color: #00ff00;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Courier New', 'Courier', monospace;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.4;
+    letter-spacing: 0.2px;
+    font-family: 'Courier New', 'Courier', monospace;
+  }
+}
