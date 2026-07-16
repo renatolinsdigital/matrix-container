@@ -217,25 +217,33 @@
 }
 
 .panelBody {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
   padding: 1.25rem 1.5rem;
-
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .panelGroup {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+}
+
+// Sliders share one row's worth of height at every width — unlike the theme
+// swatches (a multi-row button grid), so this grid can safely reflow its own
+// column count without ever fighting a taller sibling for row height.
+.panelSliders {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem 2rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .panelLabel {
@@ -256,8 +264,13 @@
 
 .swatches {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
+  max-width: 520px;
+
+  @media (max-width: 420px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .swatch {

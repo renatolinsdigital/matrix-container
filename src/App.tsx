@@ -77,8 +77,6 @@ const THEMES = {
   cyan: { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
   amber: { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
   red: { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
-  violet: { rgb: '178, 0, 255', hex: '#b200ff', label: 'Violet' },
-  blue: { rgb: '0, 128, 255', hex: '#0080ff', label: 'Blue' },
 } as const;
 
 type ThemeKey = keyof typeof THEMES;
@@ -192,47 +190,49 @@ function App() {
               </div>
             </div>
 
-            <label className={styles.slider}>
-              <span className={styles.panelLabel}>
-                Density <em>{density.toFixed(2)}</em>
-              </span>
-              <input
-                type="range"
-                min={0.05}
-                max={1}
-                step={0.05}
-                value={density}
-                onChange={(e) => setDensity(Number(e.target.value))}
-              />
-            </label>
+            <div className={styles.panelSliders}>
+              <label className={styles.slider}>
+                <span className={styles.panelLabel}>
+                  Density <em>{density.toFixed(2)}</em>
+                </span>
+                <input
+                  type="range"
+                  min={0.05}
+                  max={1}
+                  step={0.05}
+                  value={density}
+                  onChange={(e) => setDensity(Number(e.target.value))}
+                />
+              </label>
 
-            <label className={styles.slider}>
-              <span className={styles.panelLabel}>
-                Speed <em>{tickMs}ms</em>
-              </span>
-              <input
-                type="range"
-                min={TICK_MS_FASTEST}
-                max={TICK_MS_SLOWEST}
-                step={10}
-                value={TICK_MS_FASTEST + TICK_MS_SLOWEST - tickMs}
-                onChange={(e) => setTickMs(TICK_MS_FASTEST + TICK_MS_SLOWEST - Number(e.target.value))}
-              />
-            </label>
+              <label className={styles.slider}>
+                <span className={styles.panelLabel}>
+                  Speed <em>{tickMs}ms</em>
+                </span>
+                <input
+                  type="range"
+                  min={TICK_MS_FASTEST}
+                  max={TICK_MS_SLOWEST}
+                  step={10}
+                  value={TICK_MS_FASTEST + TICK_MS_SLOWEST - tickMs}
+                  onChange={(e) => setTickMs(TICK_MS_FASTEST + TICK_MS_SLOWEST - Number(e.target.value))}
+                />
+              </label>
 
-            <label className={styles.slider}>
-              <span className={styles.panelLabel}>
-                Font size <em>{fontSize}px</em>
-              </span>
-              <input
-                type="range"
-                min={12}
-                max={32}
-                step={1}
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-              />
-            </label>
+              <label className={styles.slider}>
+                <span className={styles.panelLabel}>
+                  Font size <em>{fontSize}px</em>
+                </span>
+                <input
+                  type="range"
+                  min={12}
+                  max={32}
+                  step={1}
+                  value={fontSize}
+                  onChange={(e) => setFontSize(Number(e.target.value))}
+                />
+              </label>
+            </div>
           </div>
         </div>
 

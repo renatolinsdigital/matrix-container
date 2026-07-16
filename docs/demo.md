@@ -58,7 +58,9 @@ A thin `<nav>` sits above the hero: a brand mark (a blinking block-cursor `span`
 
 ### The terminal-styled panel
 
-The control panel is framed like a code editor window: a `.panelBar` strip with three `.dots` (red/yellow/green, fixed colors — not `--accent`-driven, since they're meant to read as literal macOS traffic lights) and a fake filename (`matrix.config.ts`), then a `.panelBody` holding the same grid of theme swatches + sliders as before. This is purely a framing device — no behavior changed from the sliders' original implementation.
+The control panel is framed like a code editor window: a `.panelBar` strip with three `.dots` (red/yellow/green, fixed colors — not `--accent`-driven, since they're meant to read as literal macOS traffic lights) and a fake filename (`matrix.config.ts`), then a `.panelBody`. This is purely a framing device — no behavior changed from the sliders' original implementation.
+
+`.panelBody` stacks two independent rows rather than putting theme swatches and sliders in one shared grid: the `.panelGroup` (Theme, a multi-row button grid) on top, then `.panelSliders` (Density/Speed/Font size, always single-row fields) below. They used to share one `grid-template-columns` grid, which meant a slider cell's row height was set by the *taller* theme-swatch cell next to it — `align-items: end` bottom-aligned the short slider inside that borrowed height, leaving a visibly empty gap above it at the two-column breakpoint. Giving each its own row removes the height-sharing entirely, so `.panelSliders` can pick its own column count (3 → 2 → 1 at 720px/420px) independent of how many rows the swatches wrap to.
 
 ### The live usage snippet
 
@@ -117,12 +119,10 @@ Binds directly to `fontSize`, `min={12} max={32}`. Also drives the component's g
 
 ```tsx
 const THEMES = {
-  green:  { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
-  cyan:   { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
-  amber:  { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
-  red:    { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
-  violet: { rgb: '178, 0, 255', hex: '#b200ff', label: 'Violet' },
-  blue:   { rgb: '0, 128, 255', hex: '#0080ff', label: 'Blue' },
+  green: { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
+  cyan:  { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
+  amber: { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
+  red:   { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
 } as const;
 ```
 
@@ -140,7 +140,8 @@ Everything else — the title's accent half, the pill badge, the nav brand curso
 - **Two-tone title**: `.titleGhost` ("Matrix") is an outline-only span (`color: transparent` + `-webkit-text-stroke`) and `.titleAccent` ("Container") is solid and glowing — a common dev-tool hero treatment that reads as more "designed" than a single flat color block, and gives the eye a resting point next to the glow.
 - **Panel / snippet**: `backdrop-filter: blur(8px)` over a translucent black background — glass panels that let the rain show through faintly behind the controls without competing with them for legibility.
 - **Custom range inputs**: `appearance: none` plus hand-styled `::-webkit-slider-thumb` / `::-moz-range-thumb` (a small glowing dot in `var(--accent)`) — the native slider styling doesn't fit the terminal aesthetic and doesn't support theming via CSS variables.
-- **Theme swatch grid**: `.swatches` uses `display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr))` rather than `flex-wrap` — a CSS grid's column tracks are shared across all rows, so every swatch button ends up the same width regardless of its label length or which row it wraps to. `flex-wrap` sizes each item to its own content, which left a short last row (e.g. one lone button) visibly narrower than the rows above it once a 5th/6th theme was added.
+- **Theme swatch grid**: `.swatches` uses `display: grid; grid-template-columns: repeat(4, 1fr)` (capped at `max-width: 520px` so the row doesn't sprawl across a wide desktop panel), dropping to `repeat(2, 1fr)` at 420px — a fixed, explicit column count rather than `auto-fit`/`flex-wrap`. `auto-fit` was tried first, but its column count depends on how many `minmax(96px, 1fr)` tracks fit at a given width, which reflows unpredictably as the panel shrinks (e.g. 3 across with a single lone button on its own row) instead of breaking cleanly into even pairs.
+- **Panel/slider layout**: see "The terminal-styled panel" above — `.panelSliders` is a separate grid from the theme swatches specifically so a short slider row never has to borrow its height from the taller swatch grid next to it.
 - **Blueprint grid backdrop**: `.app::before`, a faint two-`linear-gradient` grid (48px cells) masked to fade out radially toward the edges — a subtle "technical drawing" texture behind the rain, at low enough opacity (`color-mix(... 10%, transparent)`) that it never competes with the canvas or the foreground text.
 - **Scanlines**: `.scanlines`, a fixed `repeating-linear-gradient` overlay at `opacity: 0.12` with `mix-blend-mode: overlay` — a CRT-style texture over the whole viewport, reinforcing the terminal/monitor feel without reducing text contrast enough to hurt legibility.
 - **Entrance animation**: a single `@keyframes fade-in` (opacity + translateY) on `.container`, guarded by `@media (prefers-reduced-motion: reduce)` — which also disables the brand cursor blink and hero pill's pulse.
