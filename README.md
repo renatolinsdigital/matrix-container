@@ -88,12 +88,6 @@ Defaults, from [`src/lib/matrixConfig.ts`](src/lib/matrixConfig.ts):
 
 Full breakdown of the algorithm and the config-mutation strategy: **[docs/component.md](docs/component.md)**.
 
-## Demo
-
-[`src/App.tsx`](src/App.tsx) (what `npm run dev` serves) is a live testbed for the component: a control panel with density/speed/font-size sliders and six color themes, all wired straight into `MatrixContainer`'s `config` prop and applied without remounting. Theme selection also drives a single `--accent` CSS variable that re-colors the rest of the page (title glow, borders, slider thumbs) to match the rain color.
-
-How the demo page itself is put together — the data-driven feature cards, the inverted speed slider, the `--accent` theming, font/build choices: **[docs/demo.md](docs/demo.md)**.
-
 ## Browser Support
 
 Chrome, Edge, Firefox, Safari (recent versions). Requires Canvas 2D + ResizeObserver.
