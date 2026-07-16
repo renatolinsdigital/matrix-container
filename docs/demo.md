@@ -4,39 +4,69 @@
 
 ## Structure
 
-The page is `MatrixContainer` used as its own root (`as="main"`), with a control panel and a feature grid as its `children`:
+The page is `MatrixContainer` used as its own root (`as="main"`), with a nav bar, hero, terminal-styled control panel, a live code snippet, a feature grid, and a footer as its `children`:
 
 ```tsx
 <MatrixContainer as="main" className={styles.app} canvasOpacity={0.25} config={config} style={{ '--accent': accent }}>
+  <div className={styles.scanlines} />
   <div className={styles.container}>
-    <header>...</header>
-    <div className={styles.panel}>...sliders + theme swatches...</div>
-    <div className={styles.grid}>...feature cards...</div>
+    <nav>...brand + tech badges...</nav>
+    <header>...pill + two-tone title...</header>
+    <div className={styles.panel}>...terminal title bar, sliders + theme swatches...</div>
+    <div className={styles.snippet}>...live-updating usage snippet + copy button...</div>
+    <div className={styles.grid}>...feature cards with icons...</div>
+    <footer>...license + tech line...</footer>
   </div>
 </MatrixContainer>
 ```
 
 `canvasOpacity={0.25}` keeps the rain as a backdrop rather than the main event — full opacity fights with the foreground text for attention.
 
+`.scanlines` is a fixed, pointer-events-none overlay rendered as a *sibling* of `.container` (both are children of `MatrixContainer`'s internal content layer), not a descendant of it. That matters because `.container` animates `transform` on mount (`fade-in`, below) — a `position: fixed` element inside an ancestor with an active `transform` would be repositioned relative to that ancestor instead of the viewport for the animation's duration. Keeping `.scanlines` a sibling sidesteps that entirely.
+
+`.app::before` draws a faint fixed grid (`background-image` of two `linear-gradient`s, radial `mask-image` to fade it out toward the edges) behind the canvas — same stacking trick as before: a pseudo-element is painted as the first thing inside its box, so it sits behind the real `<canvas>` child at the same `z-index`.
+
 ### Data-driven feature cards
 
-The four "why use this" cards are a `const FEATURES = [...] as const` array rendered with `.map()`, rather than four hand-written copies of the same JSX block:
+The four "why use this" cards are a `const FEATURES = [...] as const` array rendered with `.map()`, rather than four hand-written copies of the same JSX block. Each entry also carries an `icon` component (a small hand-written inline SVG, `stroke="currentColor"` so it inherits the card's color and reacts to `--accent` on hover) so the grid doesn't depend on an icon library:
 
 ```tsx
 const FEATURES = [
-  { id: '01', title: 'Configurable', body: 'Density, speed, colors, characters' },
+  { id: '01', title: 'Configurable', body: 'Density, speed, colors, characters', icon: ConfigIcon },
   ...
 ] as const;
 
-{FEATURES.map((feature) => (
-  <div className={styles.feature} key={feature.id}>
-    <div className={styles.label}>{feature.id}</div>
-    <h3>{feature.title}</h3>
-    <p>{feature.body}</p>
-  </div>
-))}
+{FEATURES.map((feature) => {
+  const Icon = feature.icon;
+  return (
+    <div className={styles.feature} key={feature.id}>
+      <div className={styles.featureTop}>
+        <span className={styles.featureIcon}><Icon /></span>
+        <div className={styles.label}>{feature.id}</div>
+      </div>
+      <h3>{feature.title}</h3>
+      <p>{feature.body}</p>
+    </div>
+  );
+})}
 ```
 Adding, removing, or reordering a card is a one-line data change, and there's no risk of the four copies drifting out of sync with each other's markup.
+
+### The nav bar and tech badges
+
+A thin `<nav>` sits above the hero: a brand mark (a blinking block-cursor `span`, `@keyframes blink`, evoking a terminal prompt) on the left, and a static row of pill badges (`React 18` / `TypeScript` / `Canvas 2D` / `Zero-dep`) on the right — a `const BADGES = [...] as const` mapped the same way as `FEATURES`. The badges hide below 640px rather than wrapping awkwardly next to the brand.
+
+### The terminal-styled panel
+
+The control panel is framed like a code editor window: a `.panelBar` strip with three `.dots` (red/yellow/green, fixed colors — not `--accent`-driven, since they're meant to read as literal macOS traffic lights) and a fake filename (`matrix.config.ts`), then a `.panelBody` holding the same grid of theme swatches + sliders as before. This is purely a framing device — no behavior changed from the sliders' original implementation.
+
+### The live usage snippet
+
+Below the panel, `.snippet` renders a fake code editor block showing the exact `<MatrixContainer config={{...}}>` JSX a developer would write to reproduce the current panel state. It reads the same `density` / `tickMs` / `fontSize` / `theme` state as the panel — there's no separate source of truth, so it's always in sync without an effect or extra memo beyond the `configCode` string used for clipboard copy.
+
+The highlighted markup is written as literal JSX spans (`.tokTag`, `.tokAttr`, `.tokKey`, `.tokStr`, `.tokNum`, `.tokPunct`) rather than run through a tokenizer/regex over a string — the snippet's shape is fixed, only the values change, so hand-placing spans around the dynamic parts is simpler and can't mis-tokenize. A parallel plain-text template literal (`configCode`, same state, same values) is what actually gets copied to the clipboard; the two are built from the same state so they can't drift apart.
+
+The **Copy** button calls `navigator.clipboard.writeText(configCode)`, flips a `copied` flag for 1.5s (`Copy` → `Copied ✓`), and swallows any rejection silently — the Clipboard API can throw in insecure contexts or without a permissions grant, and there's no fallback UX worth building for that case in a demo. The 1.5s revert timer is tracked in a ref and cleared on unmount (and on rapid re-clicks) so it can't call `setState` after the component is gone.
 
 ## The control panel: exercising `config` live
 
@@ -87,10 +117,12 @@ Binds directly to `fontSize`, `min={12} max={32}`. Also drives the component's g
 
 ```tsx
 const THEMES = {
-  green: { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
-  cyan:  { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
-  amber: { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
-  red:   { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
+  green:  { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
+  cyan:   { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
+  amber:  { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
+  red:    { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
+  violet: { rgb: '178, 0, 255', hex: '#b200ff', label: 'Violet' },
+  blue:   { rgb: '0, 128, 255', hex: '#0080ff', label: 'Blue' },
 } as const;
 ```
 
@@ -100,15 +132,19 @@ Each theme carries two representations of the same color: `rgb` (comma-separated
 <MatrixContainer style={{ '--accent': THEMES[theme].hex } as React.CSSProperties} ...>
 ```
 
-Everything else — the glowing title, the divider gradient, the panel border, the feature card borders/headings, the slider thumbs, the swatch dots — reads `var(--accent)` (see [App.module.scss](../src/App.module.scss)) rather than hardcoding a color, usually through `color-mix(in srgb, var(--accent) X%, transparent)` for translucent variants. One state change re-themes the whole page and the rain together, with no per-element theme logic.
+Everything else — the title's accent half, the pill badge, the nav brand cursor, the panel/snippet borders, the feature card borders/headings, the slider thumbs, the swatch dots — reads `var(--accent)` (see [App.module.scss](../src/App.module.scss)) rather than hardcoding a color, usually through `color-mix(in srgb, var(--accent) X%, transparent)` for translucent variants. One state change re-themes the whole page and the rain together, with no per-element theme logic. A few things are deliberately *not* themed: the traffic-light dots on the panel/snippet title bars, and the syntax-highlighter's tag/attribute/string colors — those read as literal UI chrome and code-editor conventions, not as part of the rain's color identity, so they stay fixed regardless of theme (only `.tokNum`, which mirrors the slider values, ties into `--accent`).
 
 ## Styling notes
 
 - **Font**: [JetBrains Mono](https://www.jetbrains.com/lp/mono/), loaded via a `<link>` in [index.html](../index.html) (weights 400/500/700). Chosen over the previous `'Courier New'` stack because it ships real bold/medium weights — Courier New doesn't, so browsers synthesize (“faux-bold”) it, which looks noticeably rougher on the large glowing title and the small uppercase panel labels. `'Courier New', 'Courier', monospace` is kept as a fallback stack.
-- **Panel**: `backdrop-filter: blur(8px)` over a translucent black background — a glass panel that lets the rain show through faintly behind the controls without competing with them for legibility.
+- **Two-tone title**: `.titleGhost` ("Matrix") is an outline-only span (`color: transparent` + `-webkit-text-stroke`) and `.titleAccent` ("Container") is solid and glowing — a common dev-tool hero treatment that reads as more "designed" than a single flat color block, and gives the eye a resting point next to the glow.
+- **Panel / snippet**: `backdrop-filter: blur(8px)` over a translucent black background — glass panels that let the rain show through faintly behind the controls without competing with them for legibility.
 - **Custom range inputs**: `appearance: none` plus hand-styled `::-webkit-slider-thumb` / `::-moz-range-thumb` (a small glowing dot in `var(--accent)`) — the native slider styling doesn't fit the terminal aesthetic and doesn't support theming via CSS variables.
-- **Entrance animation**: a single `@keyframes fade-in` (opacity + translateY) on `.container`, guarded by `@media (prefers-reduced-motion: reduce)`.
-- **Responsive**: the control panel and feature grid both collapse via `grid-template-columns` media queries (4 → 2 → 1 columns), and the page uses `min-height: 100vh` with normal document flow (not a fixed `height: 100vh` with `overflow: hidden`) so the panel + grid can never get clipped on short viewports — they scroll instead.
+- **Theme swatch grid**: `.swatches` uses `display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr))` rather than `flex-wrap` — a CSS grid's column tracks are shared across all rows, so every swatch button ends up the same width regardless of its label length or which row it wraps to. `flex-wrap` sizes each item to its own content, which left a short last row (e.g. one lone button) visibly narrower than the rows above it once a 5th/6th theme was added.
+- **Blueprint grid backdrop**: `.app::before`, a faint two-`linear-gradient` grid (48px cells) masked to fade out radially toward the edges — a subtle "technical drawing" texture behind the rain, at low enough opacity (`color-mix(... 10%, transparent)`) that it never competes with the canvas or the foreground text.
+- **Scanlines**: `.scanlines`, a fixed `repeating-linear-gradient` overlay at `opacity: 0.12` with `mix-blend-mode: overlay` — a CRT-style texture over the whole viewport, reinforcing the terminal/monitor feel without reducing text contrast enough to hurt legibility.
+- **Entrance animation**: a single `@keyframes fade-in` (opacity + translateY) on `.container`, guarded by `@media (prefers-reduced-motion: reduce)` — which also disables the brand cursor blink and hero pill's pulse.
+- **Responsive**: the control panel and feature grid both collapse via `grid-template-columns` media queries (4 → 2 → 1 columns), the nav badges hide below 640px rather than wrapping, and the page uses `min-height: 100vh` with normal document flow (not a fixed `height: 100vh` with `overflow: hidden`) so nothing can get clipped on short viewports — it scrolls instead.
 
 ## Build tooling notes
 

@@ -4,9 +4,43 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 3rem 1rem;
+  padding: 3rem 1rem 4rem;
   font-family: 'JetBrains Mono', 'Courier New', 'Courier', monospace;
   font-weight: 500;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 60% at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at center, black 0%, transparent 75%);
+    transition: background-image 0.4s ease;
+  }
+}
+
+// Fixed CRT-style overlay — a sibling of .container inside MatrixContainer's own
+// content layer (not a descendant of .container), so the fade-in transform on
+// .container never turns this into a stray containing block for its fixed position.
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.5) 0px,
+    rgba(0, 0, 0, 0.5) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.12;
+  mix-blend-mode: overlay;
 }
 
 .container {
@@ -17,32 +51,108 @@
   animation: fade-in 0.6s ease both;
 }
 
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.25rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  transition: border-color 0.4s ease;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.brandCursor {
+  display: inline-block;
+  width: 8px;
+  height: 1rem;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  animation: blink 1.1s step-end infinite;
+}
+
+.navBadges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.navBadge {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.3rem 0.6rem;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
 .header {
   margin-bottom: 2.5rem;
   text-align: center;
 }
 
-.kicker {
-  margin: 0 0 0.75rem;
-  font-size: 0.75rem;
-  letter-spacing: 0.3em;
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--accent) 70%, white 30%);
-  opacity: 0.85;
-  transition: color 0.4s ease;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  transition: color 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+}
+
+.pillDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  animation: pulse 1.6s ease-in-out infinite;
+  transition: background 0.4s ease;
 }
 
 .title {
   margin: 0 0 1rem 0;
   font-size: clamp(2.5rem, 8vw, 4.5rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.titleGhost {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
+  margin-right: 0.3ch;
+}
+
+.titleAccent {
   color: var(--accent);
   text-shadow:
     0 0 40px color-mix(in srgb, var(--accent) 60%, transparent),
     0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
-  line-height: 1;
-  text-transform: uppercase;
   -webkit-text-stroke: 0.3px color-mix(in srgb, var(--accent) 20%, transparent);
   transition: color 0.4s ease, text-shadow 0.4s ease;
 }
@@ -55,25 +165,59 @@
   line-height: 1.6;
 }
 
-.divider {
-  height: 1px;
-  width: 40%;
-  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
-  margin: 1.75rem auto 0;
-  transition: background 0.4s ease;
+.panel {
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  margin-bottom: 2rem;
+  transition: border-color 0.4s ease;
 }
 
-.panel {
+.panelBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+  transition: border-color 0.4s ease;
+}
+
+.dots {
+  display: flex;
+  gap: 0.4rem;
+
+  span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+}
+
+.dotRed {
+  background: #ff5f56;
+}
+
+.dotYellow {
+  background: #ffbd2e;
+}
+
+.dotGreen {
+  background: #27c93f;
+}
+
+.panelFile {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.panelBody {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
   align-items: end;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  backdrop-filter: blur(8px);
   padding: 1.25rem 1.5rem;
-  margin-bottom: 2rem;
-  transition: border-color 0.4s ease;
 
   @media (max-width: 800px) {
     grid-template-columns: repeat(2, 1fr);
@@ -107,15 +251,17 @@
 }
 
 .swatches {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 0.5rem;
-  flex-wrap: wrap;
 }
 
 .swatch {
   --swatch-color: #00ff00;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
   border: 1px solid color-mix(in srgb, var(--swatch-color) 50%, transparent);
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
@@ -186,10 +332,99 @@
   }
 }
 
+.snippet {
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  background: rgba(10, 12, 10, 0.75);
+  backdrop-filter: blur(8px);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  transition: border-color 0.4s ease;
+}
+
+.snippetHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  transition: border-color 0.4s ease;
+}
+
+.snippetLabel {
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.copyBtn {
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 70%, white 30%);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 0;
+
+  &:hover {
+    border-color: var(--accent);
+    color: #fff;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.code {
+  margin: 0;
+  padding: 1.1rem 1.4rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.6;
+
+  code {
+    white-space: pre;
+  }
+}
+
+.tokTag {
+  color: #7ee787;
+}
+
+.tokAttr {
+  color: #79c0ff;
+}
+
+.tokKey {
+  color: #79c0ff;
+}
+
+.tokStr {
+  color: #ffa657;
+}
+
+.tokNum {
+  color: color-mix(in srgb, var(--accent) 75%, white 25%);
+  transition: color 0.4s ease;
+}
+
+.tokPunct {
+  color: rgba(255, 255, 255, 0.45);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
+  margin-bottom: 2.5rem;
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(2, 1fr);
@@ -204,7 +439,6 @@
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-left: 2px solid var(--accent);
-  border-radius: 0;
   padding: 1rem 1.25rem;
   position: relative;
   transition: all 0.25s ease;
@@ -225,13 +459,36 @@
     background: color-mix(in srgb, var(--accent) 4%, transparent);
     box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 20%, transparent);
     transform: translateY(-2px);
+
+    .featureIcon {
+      color: var(--accent);
+      transform: scale(1.1);
+    }
+  }
+
+  .featureTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .featureIcon {
+    width: 20px;
+    height: 20px;
+    color: rgba(255, 255, 255, 0.45);
+    transition: color 0.25s ease, transform 0.25s ease;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
   }
 
   .label {
     font-size: 0.7rem;
     color: color-mix(in srgb, var(--accent) 60%, transparent);
     letter-spacing: 0.1em;
-    margin-bottom: 0.5rem;
     font-weight: 600;
     text-transform: uppercase;
   }
@@ -255,6 +512,26 @@
   }
 }
 
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.35);
+  padding-top: 1.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--accent) 15%, transparent);
+  transition: border-color 0.4s ease;
+}
+
+.footerDivider {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -267,8 +544,38 @@
   }
 }
 
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .container {
+    animation: none;
+  }
+
+  .brandCursor,
+  .pillDot {
     animation: none;
   }
 }
