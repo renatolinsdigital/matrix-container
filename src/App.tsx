@@ -159,8 +159,7 @@ function App() {
             <span className={styles.titleAccent}>Container</span>
           </h1>
           <p className={styles.subtitle}>
-            A drop-in canvas backdrop that turns any element into a katakana rain effect —
-            tune it live below.
+            A drop-in canvas backdrop that turns any element into a katakana rain effect.
           </p>
         </div>
 
