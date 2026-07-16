@@ -7,8 +7,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
 button {
@@ -24,7 +24,7 @@ button {
 }
 
 button:hover {
-  border-color #646cff;
+  border-color: #646cff;
 }
 
 button:focus,

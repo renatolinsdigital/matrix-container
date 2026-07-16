@@ -9,9 +9,11 @@ interface MatrixContainerProps {
   /** Content rendered above the matrix canvas */
   children?: React.ReactNode;
   /**
-   * Partial config override — merged with the default MATRIX_CONFIG at mount time.
-   * Pass a stable object (defined outside the component or via useMemo) to avoid
-   * unnecessary remounts if the parent re-renders.
+   * Partial config override — merged with the default MATRIX_CONFIG at mount,
+   * then kept live: later changes are applied to the running animation in
+   * place, without tearing down the canvas or ResizeObserver. Pass a stable
+   * object (defined outside the component or via useMemo) so unrelated parent
+   * re-renders don't trigger redundant merges.
    */
   config?: Partial<MatrixConfig>;
   /**
@@ -40,7 +42,7 @@ interface MatrixContainerProps {
  * permanently in its background. All content passed as `children` is
  * rendered on top of the canvas via a `position: relative; z-index: 1` layer.
  *
- * The canvas auto-sizes to fill the wrappglyphOpacity = 1, er via ResizeObserver and cleans up
+ * The canvas auto-sizes to fill the wrapper via ResizeObserver and cleans up
  * on unmount (cancelAnimationFrame + ResizeObserver.disconnect).
  *
  * @see README.md for full algorithm and config documentation.
@@ -49,10 +51,14 @@ const MatrixContainer = React.forwardRef<HTMLElement, MatrixContainerProps>(
   ({ children, config, canvasOpacity = 1, className, style, id, as: Tag = 'div' }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Capture merged config once at mount — stored in a ref so the effect
-    // doesn't need config in its dependency array (avoids restart on every
-    // render when config is an inline object literal).
+    // Merged once at mount, then mutated in place (see the effect below) —
+    // the tick loop closes over this same object, so property updates are
+    // picked up on the next frame with no restart.
     const cfgRef = useRef<MatrixConfig>({ ...MATRIX_CONFIG, ...config });
+
+    // Re-measures the canvas and re-rolls the drops array on demand.
+    // Populated by the setup effect; called by the live-config effect below.
+    const regridRef = useRef<(immediate?: boolean) => void>();
 
     useEffect(() => {
       const canvas = canvasRef.current;
@@ -61,33 +67,38 @@ const MatrixContainer = React.forwardRef<HTMLElement, MatrixContainerProps>(
       if (!ctx) return;
 
       const cfg = cfgRef.current;
-      const FS = cfg.fontSize;
 
       // drop[i] = current row of the head glyph in column i (negative = above canvas)
       let drops: number[] = [];
       let rafId: number;
       let last = 0;
 
-      const numCols = () => Math.floor(canvas.width / FS);
-      const numRows = () => Math.floor(canvas.height / FS);
+      const numCols = () => Math.floor(canvas.width / cfg.fontSize);
+      const numRows = () => Math.floor(canvas.height / cfg.fontSize);
 
-      const initDrops = (count: number) => {
+      // `immediate` scatters active columns across the whole visible height
+      // instead of starting them above the canvas. Mount/resize use the
+      // gradual entrance (rain "arrives" from the top); a config-driven
+      // re-roll uses `immediate` so a density/fontSize change reads on
+      // screen right away instead of trickling in over the next couple
+      // of seconds.
+      const initDrops = (count: number, immediate = false) => {
         drops = Array.from({ length: count }, () => {
           const active = Math.random() < cfg.columnDensity;
-          return active
-            ? -Math.floor(Math.random() * numRows())
-            : -(cfg.trailLength + Math.floor(Math.random() * numRows() * 2));
+          if (!active) return -(cfg.trailLength + Math.floor(Math.random() * numRows() * 2));
+          return immediate ? Math.floor(Math.random() * numRows()) : -Math.floor(Math.random() * numRows());
         });
       };
 
-      const resize = () => {
+      const resize = (immediate = false) => {
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
-        initDrops(numCols());
+        initDrops(numCols(), immediate);
       };
       resize();
+      regridRef.current = resize;
 
-      const ro = new ResizeObserver(resize);
+      const ro = new ResizeObserver(() => resize());
       ro.observe(canvas);
 
       const tick = (t: number) => {
@@ -95,6 +106,7 @@ const MatrixContainer = React.forwardRef<HTMLElement, MatrixContainerProps>(
         if (t - last < cfg.tickMs) return;
         last = t;
 
+        const FS = cfg.fontSize;
         const n = numCols();
         const h = canvas.height;
         ctx.clearRect(0, 0, canvas.width, h);
@@ -133,7 +145,30 @@ const MatrixContainer = React.forwardRef<HTMLElement, MatrixContainerProps>(
         cancelAnimationFrame(rafId);
         ro.disconnect();
       };
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps — config captured once via cfgRef
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps — cfgRef is mutated by the effect below, not replaced
+
+    // Apply config updates to the running animation instead of restarting it.
+    // Skipped on the mount render (cfgRef already holds these values).
+    const isMountRef = useRef(true);
+    useEffect(() => {
+      if (isMountRef.current) {
+        isMountRef.current = false;
+        return;
+      }
+      if (!config) return;
+
+      // fontSize changes the column/row grid; columnDensity decides which
+      // columns are active. Both only take visible effect once drops are
+      // re-rolled, and an inactive column can sit off-screen for a long
+      // time before naturally cycling back — so force a re-roll rather
+      // than waiting for one.
+      const needsRegrid =
+        (config.fontSize !== undefined && config.fontSize !== cfgRef.current.fontSize) ||
+        (config.columnDensity !== undefined && config.columnDensity !== cfgRef.current.columnDensity);
+
+      Object.assign(cfgRef.current, config);
+      if (needsRegrid) regridRef.current?.(true);
+    }, [config]);
 
     const classes = [styles.wrapper, className].filter(Boolean).join(' ');
 

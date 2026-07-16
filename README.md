@@ -15,7 +15,7 @@ npm run dev
 ## Usage
 
 ```tsx
-import MatrixContainer from '@/shared/components/MatrixContainer';
+import MatrixContainer from '@/component/MatrixContainer';
 
 <MatrixContainer
   as="section"
@@ -25,6 +25,8 @@ import MatrixContainer from '@/shared/components/MatrixContainer';
   <h1>Your content here</h1>
 </MatrixContainer>
 ```
+
+`config` is merged over the defaults at mount and then applied **live** — changing it on a later render (e.g. from a slider, as in the bundled demo) updates the running animation in place, with no remount and no restart. See [docs/component.md](docs/component.md) for how that works.
 
 ## Props
 
@@ -41,18 +43,22 @@ import MatrixContainer from '@/shared/components/MatrixContainer';
 
 ## Config
 
+Defaults, from [`src/lib/matrixConfig.ts`](src/lib/matrixConfig.ts):
+
 ```typescript
 {
-  fontSize: 14,           // character size
-  columnDensity: 1,       // 0–1, % of active columns
-  trailLength: 10,        // glyph count in trail
-  tickMs: 60,             // animation speed (ms per frame)
-  color: '210,255,120',   // RGB without alpha
-  headOpacity: 0.20,      // leading glyph opacity
-  trailOpacityMax: 0.10,  // max trail opacity
-  chars: [...]            // characters to display (default: katakana)
+  fontSize: 20,            // character size in px (also sets the animation's column/row grid)
+  columnDensity: 0.5,      // 0–1, probability a given column is active
+  trailLength: 10,         // glyph count in the fading trail
+  tickMs: 50,              // delay between animation ticks — lower is faster
+  color: '0, 255, 0',      // RGB triplet, no alpha
+  headOpacity: 1,          // leading glyph opacity
+  trailOpacityMax: 0.8,    // opacity of the trail's brightest (non-head) glyph
+  chars: [...]             // glyph pool (default: full-width katakana + digits)
 }
 ```
+
+`config` only needs to specify the fields you want to override — everything else falls back to the defaults above.
 
 ## Presets
 
@@ -73,11 +79,20 @@ import MatrixContainer from '@/shared/components/MatrixContainer';
 
 ## How it Works
 
-- Canvas fills the container, glyphs rendered on each tick
-- `ResizeObserver` auto-scales on container resize
-- Content renders above (z-index layering)
-- Characters re-randomize every frame for the flicker effect
-- Cleanup: removes listeners on unmount
+- The canvas is treated as a character grid (`fontSize` = cell size); each column tracks the row of its falling "head" glyph in a `drops` array.
+- A `requestAnimationFrame` loop redraws every tick, throttled by `tickMs`; `ResizeObserver` re-measures and reseeds the grid on any layout change.
+- Content passed as `children` renders in a separate layer above the canvas via `position: relative; z-index: 1` — no manual z-index juggling needed.
+- Characters re-randomize every frame (not just when a new one enters) for the flicker effect.
+- `config` changes are applied to the running animation in place rather than restarting it — a density/font-size change forces an immediate re-seed of the grid so it's visible right away instead of trickling in.
+- Cleanup on unmount cancels the animation frame and disconnects the `ResizeObserver` — no leaks.
+
+Full breakdown of the algorithm and the config-mutation strategy: **[docs/component.md](docs/component.md)**.
+
+## Demo
+
+[`src/App.tsx`](src/App.tsx) (what `npm run dev` serves) is a live testbed for the component: a control panel with density/speed/font-size sliders and four color themes, all wired straight into `MatrixContainer`'s `config` prop and applied without remounting. Theme selection also drives a single `--accent` CSS variable that re-colors the rest of the page (title glow, borders, slider thumbs) to match the rain color.
+
+How the demo page itself is put together — the data-driven feature cards, the inverted speed slider, the `--accent` theming, font/build choices: **[docs/demo.md](docs/demo.md)**.
 
 ## Browser Support
 

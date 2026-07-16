@@ -1,10 +1,11 @@
 .app {
-  height: 100vh;
+  --accent: #00ff00;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  font-family: 'Courier New', 'Courier', monospace;
+  padding: 3rem 1rem;
+  font-family: 'JetBrains Mono', 'Courier New', 'Courier', monospace;
   font-weight: 500;
 }
 
@@ -13,11 +14,22 @@
   z-index: 1;
   max-width: 1400px;
   width: 100%;
+  animation: fade-in 0.6s ease both;
 }
 
 .header {
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
   text-align: center;
+}
+
+.kicker {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 70%, white 30%);
+  opacity: 0.85;
+  transition: color 0.4s ease;
 }
 
 .title {
@@ -25,19 +37,153 @@
   font-size: clamp(2.5rem, 8vw, 4.5rem);
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #00ff00;
-  text-shadow: 0 0 40px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.3);
-  font-family: 'Courier New', 'Courier', monospace;
+  color: var(--accent);
+  text-shadow:
+    0 0 40px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
   line-height: 1;
   text-transform: uppercase;
-  -webkit-text-stroke: 0.3px rgba(0, 255, 0, 0.2);
+  -webkit-text-stroke: 0.3px color-mix(in srgb, var(--accent) 20%, transparent);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 0 auto;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .divider {
   height: 1px;
   width: 40%;
-  background: linear-gradient(90deg, transparent 0%, #00ff00 50%, transparent 100%);
-  margin: 0 auto;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+  margin: 1.75rem auto 0;
+  transition: background 0.4s ease;
+}
+
+.panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  align-items: end;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  backdrop-filter: blur(8px);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  transition: border-color 0.4s ease;
+
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panelGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.panelLabel {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+
+  em {
+    font-style: normal;
+    color: var(--accent);
+    transition: color 0.4s ease;
+  }
+}
+
+.swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  --swatch-color: #00ff00;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--swatch-color) 50%, transparent);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: inherit;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--swatch-color);
+    box-shadow: 0 0 6px var(--swatch-color);
+    margin-right: 0.5rem;
+  }
+
+  &:hover {
+    border-color: var(--swatch-color);
+    color: #fff;
+  }
+}
+
+.swatchActive {
+  background: color-mix(in srgb, var(--swatch-color) 18%, transparent);
+  border-color: var(--swatch-color);
+  color: #fff;
+}
+
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+
+  input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      cursor: pointer;
+    }
+
+    &::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border: none;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      cursor: pointer;
+    }
+  }
 }
 
 .grid {
@@ -56,8 +202,8 @@
 
 .feature {
   background: transparent;
-  border: 1px solid rgba(0, 255, 0, 0.3);
-  border-left: 2px solid #00ff00;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-left: 2px solid var(--accent);
   border-radius: 0;
   padding: 1rem 1.25rem;
   position: relative;
@@ -71,35 +217,33 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, #00ff00 0%, transparent 50%);
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 50%);
   }
 
   &:hover {
-    border-left-color: #00ff00;
-    border-color: rgba(0, 255, 0, 0.6);
-    background: rgba(0, 255, 0, 0.02);
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.15);
+    border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 20%, transparent);
+    transform: translateY(-2px);
   }
 
   .label {
     font-size: 0.7rem;
-    color: rgba(0, 255, 0, 0.4);
+    color: color-mix(in srgb, var(--accent) 60%, transparent);
     letter-spacing: 0.1em;
     margin-bottom: 0.5rem;
     font-weight: 600;
     text-transform: uppercase;
-    font-family: 'Courier New', 'Courier', monospace;
   }
 
   h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1rem;
-    color: #00ff00;
+    color: var(--accent);
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    font-family: 'Courier New', 'Courier', monospace;
-    text-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
   }
 
   p {
@@ -108,6 +252,23 @@
     color: rgba(255, 255, 255, 0.6);
     line-height: 1.4;
     letter-spacing: 0.2px;
-    font-family: 'Courier New', 'Courier', monospace;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    animation: none;
   }
 }
