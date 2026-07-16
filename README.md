@@ -2,9 +2,9 @@
 
 A React component that renders animated katakana matrix-rain behind your content.
 
-![print](print/print.png)
-
 Live demo: [matrix-container.netlify.app](https://matrix-container.netlify.app)
+
+![print](print/print.png)
 
 ## Install & Run
 
