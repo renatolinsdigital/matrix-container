@@ -234,10 +234,10 @@
 // column count without ever fighting a taller sibling for row height.
 .panelSliders {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem 2rem;
 
-  @media (max-width: 720px) {
+  @media (max-width: 860px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -266,9 +266,9 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
-  max-width: 520px;
+  max-width: 640px;
 
-  @media (max-width: 420px) {
+  @media (max-width: 560px) {
     grid-template-columns: repeat(2, 1fr);
   }
 }

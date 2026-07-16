@@ -7,7 +7,7 @@
 The page is `MatrixContainer` used as its own root (`as="main"`), with a nav bar, hero, terminal-styled control panel, a live code snippet, a feature grid, and a footer as its `children`:
 
 ```tsx
-<MatrixContainer as="main" className={styles.app} canvasOpacity={0.25} config={config} style={{ '--accent': accent }}>
+<MatrixContainer as="main" className={styles.app} config={config} style={{ '--accent': accent }}>
   <div className={styles.scanlines} />
   <div className={styles.container}>
     <nav>...brand + tech badges...</nav>
@@ -20,7 +20,7 @@ The page is `MatrixContainer` used as its own root (`as="main"`), with a nav bar
 </MatrixContainer>
 ```
 
-`canvasOpacity={0.25}` keeps the rain as a backdrop rather than the main event — full opacity fights with the foreground text for attention.
+The demo does *not* pass `canvasOpacity` (see component.md's prop table) — that's a second, independent opacity multiplier on the `<canvas>` element's CSS, separate from `MatrixConfig`'s per-glyph `headOpacity`/`trailOpacityMax`. An earlier version hardcoded `canvasOpacity={0.25}` to keep the rain as a backdrop rather than the main event, but once the panel's Opacity slider (below) existed, that silently capped the slider's visible ceiling to 25% — dragging it to `1` still wasn't "fully opaque" on screen, only fully opaque *within* that 25% cap. Since the config's own `headOpacity`/`trailOpacityMax` already do the same dimming job and are the only thing the slider controls, `canvasOpacity` was removed and the slider's default was lowered to `0.25` instead, to keep the same restrained look out of the box while leaving `1` as genuinely full opacity, no separate cap involved.
 
 `.scanlines` is a fixed, pointer-events-none overlay rendered as a *sibling* of `.container` (both are children of `MatrixContainer`'s internal content layer), not a descendant of it. That matters because `.container` animates `transform` on mount (`fade-in`, below) — a `position: fixed` element inside an ancestor with an active `transform` would be repositioned relative to that ancestor instead of the viewport for the animation's duration. Keeping `.scanlines` a sibling sidesteps that entirely.
 
@@ -72,21 +72,29 @@ The **Copy** button calls `navigator.clipboard.writeText(configCode)`, flips a `
 
 ## The control panel: exercising `config` live
 
-The panel's whole point is to prove `MatrixContainer`'s `config` prop actually updates the running animation, not just to look interactive. Four pieces of state drive it:
+The panel's whole point is to prove `MatrixContainer`'s `config` prop actually updates the running animation, not just to look interactive. Five pieces of state drive it:
 
 ```tsx
 const [density, setDensity] = useState(0.35);
 const [tickMs, setTickMs] = useState(100);
 const [fontSize, setFontSize] = useState(18);
-const [theme, setTheme] = useState<ThemeKey>('green');
+const [opacity, setOpacity] = useState(0.25);
+const [theme, setTheme] = useState<ThemeKey>('emerald');
 
 const config = useMemo(
-  () => ({ columnDensity: density, tickMs, fontSize, color: THEMES[theme].rgb }),
-  [density, tickMs, fontSize, theme],
+  () => ({
+    columnDensity: density,
+    tickMs,
+    fontSize,
+    headOpacity: opacity,
+    trailOpacityMax: opacity,
+    color: THEMES[theme].rgb,
+  }),
+  [density, tickMs, fontSize, opacity, theme],
 );
 ```
 
-`config` is memoized so it only gets a new object identity when one of the four values actually changes — matching the component's own documented contract ("pass a stable object... so unrelated parent re-renders don't trigger redundant merges"). Because `MatrixContainer` applies config changes to the running animation in place (see component.md), no `key` prop or remount trick is needed here — the sliders just work.
+`config` is memoized so it only gets a new object identity when one of the five values actually changes — matching the component's own documented contract ("pass a stable object... so unrelated parent re-renders don't trigger redundant merges"). Because `MatrixContainer` applies config changes to the running animation in place (see component.md), no `key` prop or remount trick is needed here — the sliders just work.
 
 ### Density slider
 
@@ -115,16 +123,28 @@ const TICK_MS_SLOWEST = 200;
 
 Binds directly to `fontSize`, `min={12} max={32}`. Also drives the component's grid dimensions (see component.md's "regrid" section) — the demo doesn't need to know that; it just sets `config.fontSize` and the component handles re-seeding the grid.
 
+### Opacity slider
+
+Drives both `headOpacity` and `trailOpacityMax`, `min={0.1} max={1} step={0.05}` — not just `headOpacity` alone. The head glyph is only one of `trailLength` (10 by default) characters drawn per column each frame; the other nine are trail glyphs whose ceiling is `trailOpacityMax`. Binding the slider to `headOpacity` only was tried first and looked like a no-op — changing the single brightest glyph per column barely registers against nine trail glyphs still capped at the default 0.8. Setting both to the same value makes the whole rain (not just the head) respond, and means `1` really is fully opaque — no glyph capped below full alpha — rather than the trail staying at its 0.8 default regardless of the slider. Unlike `fontSize`/`columnDensity`, this needs no regrid: both fields are read fresh every frame, so dragging the slider dims/brightens the rain immediately.
+
 ### Theme swatches and the `--accent` variable
+
+Eight themes, each named after a gemstone rather than a generic label (`Cyber`, `Alert`, etc.) — the earlier naming didn't scale once more than four or five colors were added, since there's no obvious generic name for, say, a pink or a gold. Gem names solve that: there's a well-known one for almost any hue.
 
 ```tsx
 const THEMES = {
-  green: { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
-  cyan:  { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
-  amber: { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
-  red:   { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
+  emerald:    { rgb: '0, 255, 0',     hex: '#00ff00', label: 'Emerald' },
+  turquoise:  { rgb: '0, 220, 255',   hex: '#00dcff', label: 'Turquoise' },
+  sapphire:   { rgb: '0, 128, 255',   hex: '#0080ff', label: 'Sapphire' },
+  amethyst:   { rgb: '178, 0, 255',   hex: '#b200ff', label: 'Amethyst' },
+  ruby:       { rgb: '255, 40, 40',   hex: '#ff2828', label: 'Ruby' },
+  roseQuartz: { rgb: '255, 79, 163',  hex: '#ff4fa3', label: 'Rose Quartz' },
+  amber:      { rgb: '255, 176, 0',   hex: '#ffb000', label: 'Amber' },
+  citrine:    { rgb: '255, 215, 0',   hex: '#ffd700', label: 'Citrine' },
 } as const;
 ```
+
+The eight hues are spread evenly around the color wheel (green, cyan, blue, violet, red, pink, orange, yellow) so no two swatches read as near-duplicates at a glance.
 
 Each theme carries two representations of the same color: `rgb` (comma-separated, no alpha) for `MatrixConfig.color`, which the canvas renderer interpolates into an `rgba(...)` string, and `hex` for CSS. Selecting a theme sets both: `config.color` (the rain) and an inline custom property on `MatrixContainer` itself:
 
@@ -140,8 +160,8 @@ Everything else — the title's accent half, the pill badge, the nav brand curso
 - **Two-tone title**: `.titleGhost` ("Matrix") is an outline-only span (`color: transparent` + `-webkit-text-stroke`) and `.titleAccent` ("Container") is solid and glowing — a common dev-tool hero treatment that reads as more "designed" than a single flat color block, and gives the eye a resting point next to the glow.
 - **Panel / snippet**: `backdrop-filter: blur(8px)` over a translucent black background — glass panels that let the rain show through faintly behind the controls without competing with them for legibility.
 - **Custom range inputs**: `appearance: none` plus hand-styled `::-webkit-slider-thumb` / `::-moz-range-thumb` (a small glowing dot in `var(--accent)`) — the native slider styling doesn't fit the terminal aesthetic and doesn't support theming via CSS variables.
-- **Theme swatch grid**: `.swatches` uses `display: grid; grid-template-columns: repeat(4, 1fr)` (capped at `max-width: 520px` so the row doesn't sprawl across a wide desktop panel), dropping to `repeat(2, 1fr)` at 420px — a fixed, explicit column count rather than `auto-fit`/`flex-wrap`. `auto-fit` was tried first, but its column count depends on how many `minmax(96px, 1fr)` tracks fit at a given width, which reflows unpredictably as the panel shrinks (e.g. 3 across with a single lone button on its own row) instead of breaking cleanly into even pairs.
-- **Panel/slider layout**: see "The terminal-styled panel" above — `.panelSliders` is a separate grid from the theme swatches specifically so a short slider row never has to borrow its height from the taller swatch grid next to it.
+- **Theme swatch grid**: `.swatches` uses `display: grid; grid-template-columns: repeat(4, 1fr)` (capped at `max-width: 640px` so the row doesn't sprawl across a wide desktop panel — wide enough to keep the longer gem names like "Rose Quartz" comfortable), dropping to `repeat(2, 1fr)` at 560px — a fixed, explicit column count rather than `auto-fit`/`flex-wrap`. `auto-fit` was tried first, but its column count depends on how many `minmax(96px, 1fr)` tracks fit at a given width, which reflows unpredictably as the panel shrinks (e.g. 3 across with a single lone button on its own row) instead of breaking cleanly into even rows. Eight is divisible by both 4 and 2, so every breakpoint tier renders full rows with nothing left dangling.
+- **Panel/slider layout**: see "The terminal-styled panel" above — `.panelSliders` is a separate grid from the theme swatches specifically so a short slider row never has to borrow its height from the taller swatch grid next to it. Four sliders, `repeat(4, 1fr)` down to `repeat(2, 1fr)` at 860px and `1fr` at 420px.
 - **Blueprint grid backdrop**: `.app::before`, a faint two-`linear-gradient` grid (48px cells) masked to fade out radially toward the edges — a subtle "technical drawing" texture behind the rain, at low enough opacity (`color-mix(... 10%, transparent)`) that it never competes with the canvas or the foreground text.
 - **Scanlines**: `.scanlines`, a fixed `repeating-linear-gradient` overlay at `opacity: 0.12` with `mix-blend-mode: overlay` — a CRT-style texture over the whole viewport, reinforcing the terminal/monitor feel without reducing text contrast enough to hurt legibility.
 - **Entrance animation**: a single `@keyframes fade-in` (opacity + translateY) on `.container`, guarded by `@media (prefers-reduced-motion: reduce)` — which also disables the brand cursor blink and hero pill's pulse.

@@ -73,10 +73,14 @@ const FEATURES = [
 const BADGES = ['React 18', 'TypeScript', 'Canvas 2D', 'Zero-dep'] as const;
 
 const THEMES = {
-  green: { rgb: '0, 255, 0', hex: '#00ff00', label: 'Classic' },
-  cyan: { rgb: '0, 220, 255', hex: '#00dcff', label: 'Cyber' },
+  emerald: { rgb: '0, 255, 0', hex: '#00ff00', label: 'Emerald' },
+  turquoise: { rgb: '0, 220, 255', hex: '#00dcff', label: 'Turquoise' },
+  sapphire: { rgb: '0, 128, 255', hex: '#0080ff', label: 'Sapphire' },
+  amethyst: { rgb: '178, 0, 255', hex: '#b200ff', label: 'Amethyst' },
+  ruby: { rgb: '255, 40, 40', hex: '#ff2828', label: 'Ruby' },
+  roseQuartz: { rgb: '255, 79, 163', hex: '#ff4fa3', label: 'Rose Quartz' },
   amber: { rgb: '255, 176, 0', hex: '#ffb000', label: 'Amber' },
-  red: { rgb: '255, 40, 40', hex: '#ff2828', label: 'Alert' },
+  citrine: { rgb: '255, 215, 0', hex: '#ffd700', label: 'Citrine' },
 } as const;
 
 type ThemeKey = keyof typeof THEMES;
@@ -92,21 +96,29 @@ function App() {
   const [density, setDensity] = useState(0.35);
   const [tickMs, setTickMs] = useState(100);
   const [fontSize, setFontSize] = useState(18);
-  const [theme, setTheme] = useState<ThemeKey>('green');
+  const [opacity, setOpacity] = useState(0.25);
+  const [theme, setTheme] = useState<ThemeKey>('emerald');
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const config = useMemo(
-    () => ({ columnDensity: density, tickMs, fontSize, color: THEMES[theme].rgb }),
-    [density, tickMs, fontSize, theme],
+    () => ({
+      columnDensity: density,
+      tickMs,
+      fontSize,
+      headOpacity: opacity,
+      trailOpacityMax: opacity,
+      color: THEMES[theme].rgb,
+    }),
+    [density, tickMs, fontSize, opacity, theme],
   );
 
   const accent = THEMES[theme].hex;
 
   const configCode = useMemo(
     () =>
-      `<MatrixContainer\n  config={{\n    columnDensity: ${density.toFixed(2)},\n    tickMs: ${tickMs},\n    fontSize: ${fontSize},\n    color: '${THEMES[theme].rgb}',\n  }}\n>\n  <YourContent />\n</MatrixContainer>`,
-    [density, tickMs, fontSize, theme],
+      `<MatrixContainer\n  config={{\n    columnDensity: ${density.toFixed(2)},\n    tickMs: ${tickMs},\n    fontSize: ${fontSize},\n    headOpacity: ${opacity.toFixed(2)},\n    trailOpacityMax: ${opacity.toFixed(2)},\n    color: '${THEMES[theme].rgb}',\n  }}\n>\n  <YourContent />\n</MatrixContainer>`,
+    [density, tickMs, fontSize, opacity, theme],
   );
 
   useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
@@ -126,7 +138,6 @@ function App() {
     <MatrixContainer
       as="main"
       className={styles.app}
-      canvasOpacity={0.25}
       config={config}
       style={{ '--accent': accent } as React.CSSProperties}
     >
@@ -232,6 +243,20 @@ function App() {
                   onChange={(e) => setFontSize(Number(e.target.value))}
                 />
               </label>
+
+              <label className={styles.slider}>
+                <span className={styles.panelLabel}>
+                  Opacity <em>{opacity.toFixed(2)}</em>
+                </span>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={1}
+                  step={0.05}
+                  value={opacity}
+                  onChange={(e) => setOpacity(Number(e.target.value))}
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -263,6 +288,16 @@ function App() {
               <span className={styles.tokKey}>fontSize</span>
               <span className={styles.tokPunct}>: </span>
               <span className={styles.tokNum}>{fontSize}</span>
+              <span className={styles.tokPunct}>,</span>
+              {'\n    '}
+              <span className={styles.tokKey}>headOpacity</span>
+              <span className={styles.tokPunct}>: </span>
+              <span className={styles.tokNum}>{opacity.toFixed(2)}</span>
+              <span className={styles.tokPunct}>,</span>
+              {'\n    '}
+              <span className={styles.tokKey}>trailOpacityMax</span>
+              <span className={styles.tokPunct}>: </span>
+              <span className={styles.tokNum}>{opacity.toFixed(2)}</span>
               <span className={styles.tokPunct}>,</span>
               {'\n    '}
               <span className={styles.tokKey}>color</span>
